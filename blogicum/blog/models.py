@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
-from blog.constants import OUTPUT_SIMS
+
+from .constants import OUTPUT_SIMS
 
 User = get_user_model()
 

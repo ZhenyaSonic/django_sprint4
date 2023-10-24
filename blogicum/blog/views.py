@@ -10,21 +10,20 @@ from django.utils import timezone
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
 
-from blog.forms import CommentForm, PostForm, ProfileForm
-from blog.models import Category, Comment, Post
+from .forms import CommentForm, PostForm, ProfileForm
+from .models import Category, Comment, Post
 
 
 class ProfileLoginView(LoginView):
     def get_success_url(self):
-        url = reverse(
+        return reverse(
             'blog:profile',
             args=(self.request.user.get_username(),)
         )
-        return url
 
 
 def edit_profile(request, name):
-    '''Изменение профиля пользователя.'''
+    """Изменение профиля пользователя."""
     user = get_object_or_404(User, username=name)
     if user.username != request.user.username:
         return redirect('login')
@@ -36,7 +35,7 @@ def edit_profile(request, name):
 
 
 def info_profile(request, name):
-    '''Информация о профиле пользователя.'''
+    """Информация о профиле пользователя."""
     templates = 'blog/profile.html'
     user = get_object_or_404(
         User,
@@ -68,7 +67,7 @@ class PostListView(ListView):
 
 
 def category_posts(request, category_slug):
-    '''Отображение по котегории постов'''
+    """Отображение по котегории постов."""
     templates = 'blog/category.html'
     current_time = timezone.now()
     category = get_object_or_404(
@@ -96,22 +95,21 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     template_name = 'blog/create.html'
 
     def form_valid(self, form):
-        '''Проверка валидности формы.'''
+        """Проверка валидности формы."""
         form.instance.author = self.request.user
         return super().form_valid(form)
 
     def get_success_url(self):
-        '''Получение адреса.'''
-        url = reverse(
+        """Получение адреса."""
+        return reverse(
             'blog:profile',
             args=(self.request.user.get_username(),)
         )
-        return url
 
 
 class DispatchMixin:
     def dispatch(self, request, *args, **kwargs):
-        '''Отправляет изменения/удаления поста'''
+        """Отправляет изменения/удаления поста."""
         self.post_id = kwargs['pk']
         if self.get_object().author != request.user:
             return redirect('blog:post_detail', pk=self.post_id)
@@ -124,9 +122,8 @@ class PostUpdateView(LoginRequiredMixin, DispatchMixin, UpdateView):
     template_name = 'blog/create.html'
 
     def get_success_url(self):
-        '''Получение адреса.'''
-        url = reverse('blog:post_detail', args=(self.post_id,))
-        return url
+        """Получение адреса."""
+        return reverse('blog:post_detail', args=(self.post_id,))
 
 
 class PostDeleteView(LoginRequiredMixin, DispatchMixin, DeleteView):
@@ -149,7 +146,7 @@ class PostDetailView(DetailView):
         )
 
     def get_context_data(self, **kwargs):
-        '''Получение данных контекста'''
+        """Получение данных контекста."""
         context = super().get_context_data(**kwargs)
         context['form'] = CommentForm()
         context['comments'] = (
@@ -162,7 +159,7 @@ class PostDetailView(DetailView):
 
 @login_required
 def add_comment(request, pk):
-    '''Добавление комментария'''
+    """Добавление комментария."""
     post = get_object_or_404(Post, pk=pk)
     form = CommentForm(request.POST or None)
     if form.is_valid():
@@ -175,7 +172,7 @@ def add_comment(request, pk):
 
 @login_required
 def edit_comment(request, comment_id, post_id):
-    '''Изменение комментария'''
+    """Изменение комментария."""
     instance = get_object_or_404(Comment, id=comment_id, post_id=post_id)
     form = CommentForm(request.POST or None, instance=instance)
     if instance.author != request.user:
@@ -193,7 +190,7 @@ def edit_comment(request, comment_id, post_id):
 
 @login_required
 def delete_comment(request, comment_id, post_id):
-    '''Удаление комментария'''
+    """Удаление комментария."""
     instance = get_object_or_404(Comment, id=comment_id, post_id=post_id)
     if instance.author != request.user:
         return redirect('blog:post_detail', pk=post_id)
