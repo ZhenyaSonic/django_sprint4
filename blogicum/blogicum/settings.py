@@ -146,3 +146,7 @@ MEDIA_URL = 'media/'
 LOGOUT_REDIRECT_URL = '/auth/login/'
 
 LOGIN_URL = '/auth/login/'
+
+OUTPUT_SIMS = 30
+
+BLOG_PAGINATE_BY = 10

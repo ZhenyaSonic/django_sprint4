@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from blog.models import Comment, Post
-
+from .models import Comment, Post
 
 User = get_user_model()
 

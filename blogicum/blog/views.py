@@ -9,6 +9,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
+from django.conf import settings
 
 from .forms import CommentForm, PostForm, ProfileForm
 from .models import Category, Comment, Post
@@ -56,14 +57,10 @@ class PostListView(ListView):
     template_name = 'blog/index.html'
     model = Post
     ordering = '-pub_date'
-    paginate_by = 10
+    paginate_by = settings.BLOG_PAGINATE_BY
 
     def get_queryset(self):
-        return Post.objects.filter(
-            is_published=True,
-            pub_date__lte=timezone.now(),
-            category__is_published=True,
-        ).select_related('author', 'category', 'location')
+        return Post.published.all()
 
 
 def category_posts(request, category_slug):

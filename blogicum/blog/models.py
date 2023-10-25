@@ -2,7 +2,8 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
-from .constants import OUTPUT_SIMS
+from .managers import PublishedPostManager
+from django.conf import settings
 
 User = get_user_model()
 
@@ -40,7 +41,7 @@ class Category(PublishedModel):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title[:OUTPUT_SIMS]
+        return self.title[:settings.OUTPUT_SIMS]
 
 
 class Location(PublishedModel):
@@ -51,7 +52,7 @@ class Location(PublishedModel):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return self.name[:OUTPUT_SIMS]
+        return self.name[:settings.OUTPUT_SIMS]
 
 
 class Post(PublishedModel):
@@ -85,6 +86,9 @@ class Post(PublishedModel):
     )
     image = models.ImageField('Фото', upload_to='post_images', blank=True)
 
+    objects = models.Manager()
+    published = PublishedPostManager()
+
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
@@ -92,7 +96,7 @@ class Post(PublishedModel):
         default_related_name = 'posts'
 
     def __str__(self):
-        return self.title[:OUTPUT_SIMS]
+        return self.title[:settings.OUTPUT_SIMS]
 
 
 class Comment(models.Model):
@@ -116,4 +120,4 @@ class Comment(models.Model):
         ordering = ('created_at',)
 
     def __str__(self):
-        return self.text[:OUTPUT_SIMS]
+        return self.text[:settings.OUTPUT_SIMS]
