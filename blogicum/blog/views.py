@@ -6,7 +6,6 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils import timezone
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
 from django.conf import settings
@@ -21,6 +20,13 @@ class ProfileLoginView(LoginView):
             'blog:profile',
             args=(self.request.user.get_username(),)
         )
+
+
+def paginate_objects(request, objects_list, per_page=10):
+    """Pagination helper function."""
+    paginator = Paginator(objects_list, per_page)
+    page_number = request.GET.get('page')
+    return paginator.get_page(page_number)
 
 
 def edit_profile(request, name):
@@ -43,12 +49,10 @@ def info_profile(request, name):
         username=name,
     )
     profile_post = user.posts.all()
-    paginator = Paginator(profile_post, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+
     context = {
         'profile': user,
-        'page_obj': page_obj,
+        'page_obj': paginate_objects(request, profile_post),
     }
     return render(request, templates, context)
 
@@ -62,26 +66,28 @@ class PostListView(ListView):
     def get_queryset(self):
         return Post.published.all()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        paginator = Paginator(self.get_queryset(), self.paginate_by)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context['page_obj'] = page_obj
+        return context
+
 
 def category_posts(request, category_slug):
     """Отображение по котегории постов."""
     templates = 'blog/category.html'
-    current_time = timezone.now()
     category = get_object_or_404(
         Category,
         is_published=True,
         slug=category_slug
     )
-    post_list = category.posts.filter(
-        pub_date__lte=current_time,
-        is_published=True,
-    ).select_related('category')
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    post_list = category.posts(manager='published').all()
+
     context = {
         'category': category,
-        'page_obj': page_obj
+        'page_obj': paginate_objects(request, post_list),
     }
     return render(request, templates, context)
 
@@ -188,11 +194,11 @@ def edit_comment(request, comment_id, post_id):
 @login_required
 def delete_comment(request, comment_id, post_id):
     """Удаление комментария."""
-    instance = get_object_or_404(Comment, id=comment_id, post_id=post_id)
-    if instance.author != request.user:
+    delete_comment = get_object_or_404(Comment, id=comment_id, post_id=post_id)
+    if delete_comment.author != request.user:
         return redirect('blog:post_detail', pk=post_id)
-    context = {'comment': instance}
+    context = {'comment': delete_comment}
     if request.method == 'POST':
-        instance.delete()
+        delete_comment.delete()
         return redirect('blog:post_detail', pk=post_id)
     return render(request, 'blog/comment.html', context)
